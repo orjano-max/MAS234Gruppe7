@@ -27,17 +27,16 @@ static CAN_message_t txmsg, rxmsg;
 volatile uint32_t count_RX = 0;
 // Initiate CAN TX counter
 volatile uint32_t count_TX = 0;
-// Initiate strings for storing data from CAN TX and RX messages
+// Initiate variable used to start transmitting data
+bool startTX = false;
+// Initiate string for storing data from CAN TX and RX messages
 String CANStrRX;
-String CANStrTX;
 // Define interval timer for CAN-bus
 IntervalTimer TX_timer;
 
-
-
 void setup() {
 
-  // Set CAN-bus speed
+  //Set CAN-bus Speed
   Can1.begin(250000);
   //Start CAN transmitting timer
   TX_timer.begin(tx_CAN, 1000000);
@@ -46,7 +45,6 @@ void setup() {
   display.begin(SSD1306_SWITCHCAPVCC);
   // Clear display of old graphics
   display.clearDisplay();
-
 
   // For-loop to display fake loading Screen
   for (int i = 0; i <= 100; i = i + 9)
@@ -68,21 +66,7 @@ void setup() {
     display.display();
     display.clearDisplay();
   }
-
-  // Initiate CAN TX message data as 0
-  for (int i = 0; i < 8; i++)
-  {
-    txmsg.buf[i] = 0;
-  }
-
-  // Initiate CAN RX message data as 0
-  for (int i = 0; i < 8; i++)
-  {
-    rxmsg.buf[i] = 0;
-  }
-
 }
-
 
 //Transmit data at rate determined by TX_timer
 void tx_CAN(void)
@@ -91,7 +75,8 @@ void tx_CAN(void)
   txmsg.len = 8;
   //Set id of CAN message
   txmsg.id = 0x22;
-  //
+
+  // For loop to store recieved data in sending data package
   for (int i = 0; i < 8; i++)
   {
     txmsg.buf[i] = rxmsg.buf[i];
@@ -106,51 +91,44 @@ void tx_CAN(void)
 
 void loop() {
 
+
   while (Can1.read(rxmsg))
   {
     // Restetting string as nothing in order to store new data in string
     CANStrRX = "";
-    CANStrTX = "";
-
+    
     // For-loop to store RX data package in string, for displaying data
     for (int i = 0; i < 8; i++)
     {
       CANStrRX += String(rxmsg.buf[i], HEX);
       CANStrRX += ("") ;
     }
-
-
-    // For-loop to store TX data package in string, for displaying data
-    for (int i = 0; i < 8; i++)
-    {
-      CANStrTX += String(txmsg.buf[i], HEX);
-      CANStrTX += ("") ;
-    }
-
+    
     // Update RX counter
     count_RX++;
   }
+
+  //Clear display before writing new values:
   display.display();
   display.clearDisplay();
 
-  //Display RX info
-  display.setCursor(0, 0);
-  display.print("RX CAN ID: ");
-  display.println(rxmsg.id, HEX);
-  display.print("RX CAN Length: ");
-  display.println(rxmsg.len, HEX);
-  display.print("RX Data:");
-  display.println(CANStrRX);
-  display.print("RX Count: ");
-  display.println(count_RX);
+  //Drawing rounded rectangle with lines:
+  display.drawRoundRect(0, 0, 128, 64, 5, WHITE);
+  display.drawLine(0, 15, 128, 15, WHITE);
+  display.drawLine(5, 30, 90, 30, WHITE);
 
-  //Display TX info
-  display.print("TX CAN ID: ");
-  display.println(txmsg.id, HEX);
-  display.print("TX CAN Lenght: ");
-  display.println(txmsg.len, HEX);
-  display.print("TX Data: ");
-  display.println(CANStrTX);
-  display.print("TX Count: ");
-  display.println(count_TX);
+  //Write out info on the display after first message is recieved:
+  display.setTextSize(0);
+  display.setCursor(15, 5);
+  display.println("MAS234 - Gruppe 7");
+  display.println(" ");
+  display.println(" CAN-statistikk");
+  display.println(" ");
+  display.print(" Antall mottatt: ");
+  display.println(count_RX);
+  display.print(" RX data:");
+  display.println(CANStrRX);
+  display.print(" Mottok sist ID: ");
+  display.println(rxmsg.id);
+
 }

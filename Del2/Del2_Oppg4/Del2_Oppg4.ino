@@ -40,8 +40,6 @@ static CAN_message_t txmsg, rxmsg;
 volatile uint32_t count_RX = 0;
 // Initiate CAN TX counter
 volatile uint32_t count_TX = 0;
-// Initiate string for storing data recieved from CAN message
-String CANStrRX;
 // Initiate variable used to start transmitting data
 bool startTX = false;
 // Define interval timer for CAN-bus
