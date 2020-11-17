@@ -35,15 +35,24 @@ bool startTX = false;
 IntervalTimer TX_timer;
 
 // Initiate variables used to to make datapackages that will be sent over CAN-bus
-int myData;
-int dataPackage[] = {0, 0, 0, 0, 0};
+int myData = 0;
+int dataPackage[] = {0, 0, 0, 0, 0, 0};
+int B_0 = 0; 
+int B_1 = 0; 
+int B_2 = 0; 
+int B_3 = 0; 
+int B_4 = 0; 
+int B_5 = 0; 
+
 
 void setup() {
+
+  Serial.begin(9600);
 
   //Set CAN-bus Speed
   Can1.begin(250000);
   //Start CAN transmitting timer
-  TX_timer.begin(tx_CAN, 1000000);
+  TX_timer.begin(tx_CAN, 100000);
 
   // Initiate display
   display.begin(SSD1306_SWITCHCAPVCC);
@@ -51,7 +60,7 @@ void setup() {
   display.clearDisplay();
 
   // For-loop to display fake loading Screen
-  for (int i = 0; i <= 100; i = i + 9)
+  for (int i = 0; i <= 100; i = i + 13)
   {
     display.setTextSize(0);
     display.setTextColor(WHITE);
@@ -82,12 +91,13 @@ void setup() {
 //Transmit data at rate determined by TX_timer
 void tx_CAN(void)
 {
-  
-    //Set length of datapackage
+
+  //Set length of datapackage
   txmsg.len = 8;
   //Set id of CAN message
-  txmsg.id = 0x22;
-
+  txmsg.id = 0x21;
+  
+  Serial.println(myData);
   // Converting rawdata from IMU to an array for sending IMU data over CAN-bus
   for (int i = 0; i < 6; i++)
   {
@@ -101,7 +111,7 @@ void tx_CAN(void)
       //Do nothing
     }
   }
-
+  
   // Making CAN-bus datapackage containing raw data from IMU z-axis
   for (int i = 0; i < 6; i++)
   {
@@ -113,6 +123,7 @@ void tx_CAN(void)
   txmsg.buf[7] = 0;
 
   // Sending CAN message
+  Serial.println("Sender pew");
   Can1.write(txmsg);
   // Counting amount of messages sent
   count_TX++;
@@ -123,18 +134,50 @@ void tx_CAN(void)
 //Main loop:
 void loop() {
 
-// Checking if message is recieved and gathering data of CAN message
+  // Checking if message is recieved
   while (Can1.read(rxmsg))
-  { 
+  {
+
+  
+    
     // Update RX counter
     count_RX++;
+
+    B_0 = rxmsg.buf[0] * pow(256, 5) ;
+    B_1 = rxmsg.buf[1] * pow(256, 4) ;
+    B_2 = rxmsg.buf[2] * pow(256, 3) ;
+    B_3 = rxmsg.buf[3] * pow(256, 2) ;
+    B_4 = rxmsg.buf[4] * pow(256, 1) ;
+    B_5 = rxmsg.buf[5] * pow(256, 0) ;
+
+    myData = ( B_0 + B_1 + B_2 + B_3 + B_4 + B_5 ) * 9.81 * 1000 / 16384  ; 
+
+    Serial.println(myData);
+    
+
+    
+
+    
   }
+  /*for (int k = 0; k <= 100; k = k + 13)
+  {
+    display.setTextSize(0);
+    display.setTextColor(WHITE);
+    display.setCursor(20, 50);
+    display.print(" Loading: ");
+    display.print(k);
+    display.println("%");
+    delay(80);
+    display.display();
+    display.clearDisplay();
+  }
+  */
 
   /*for(i = 0; i < 6; i++)
-  {
-    
-  }*/
-  
-  
+    {
+
+    }*/
+
+
 
 }
