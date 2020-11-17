@@ -44,10 +44,11 @@ volatile uint32_t count_TX = 0;
 bool startTX = false;
 // Define interval timer for CAN-bus
 IntervalTimer TX_timer;
-
+// Initiate strings for storing data from CAN TX and RX messages
+String CANStrRX;
 // Initiate variables used to to make datapackages that will be sent over CAN-bus
 int myData = 0;
-int dataPackage[] = {0, 0, 0, 0, 0};
+int dataPackage[] = {0, 0, 0, 0, 0, 0};
 
 
 
@@ -59,7 +60,7 @@ void setup() {
   //Set CAN-bus Speed
   Can1.begin(250000);
   //Start CAN transmitting timer
-  TX_timer.begin(tx_CAN, 1000000);
+  TX_timer.begin(tx_CAN, 100000);
 
   // Initiate wire in order to communicate with MPU6050 via I2C
   Wire.begin();
@@ -140,6 +141,7 @@ void tx_CAN(void)
     Can1.write(txmsg);
     // Counting amount of messages sent
     count_TX++;
+    Serial.println("Sending pew pew pew");
   }
   else
   {
@@ -158,16 +160,27 @@ void loop() {
   myData = -az;
 
   //Convert raw value from IMU to m/s^2
-  az_gf = az * (9.81 / 16384);
+  az_gf = az * ((9.81) / 16384);
 
   // Checking if message is recieved and gathering data of CAN message
   while (Can1.read(rxmsg))
   {
+    // Restetting string as nothing in order to store new data in string
+    CANStrRX = "";
+
+    // For-loop to store RX data package in string, for displaying data
+    for (int i = 0; i < 8; i++)
+    {
+      CANStrRX += String(rxmsg.buf[i], HEX);
+      CANStrRX += ("") ;
+    }
+
     // Checking if message recieved has ID:0x21 in order to start transmitting
     if (rxmsg.id == 33)
     {
       startTX = true;
     }
+
 
     // Update RX counter
     count_RX++;
@@ -187,8 +200,8 @@ void loop() {
   display.println(" ");
   display.print(" Antall mottatt: ");
   display.println(count_RX);
-  display.print(" Mottok sist ID: ");
-  display.println(rxmsg.id);
+  display.print(" RX Data:");
+  display.println(CANStrRX);
   display.print(" IMU, z: ");
   display.print(-az_gf);
   display.println(" m/s^2");
