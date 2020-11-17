@@ -46,7 +46,7 @@ bool startTX = false;
 IntervalTimer TX_timer;
 
 // Initiate variables used to to make datapackages that will be sent over CAN-bus
-int myData;
+int myData = 0;
 int dataPackage[] = {0, 0, 0, 0, 0};
 
 
