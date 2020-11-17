@@ -23,14 +23,14 @@ volatile uint32_t can_msg_count = 0;
 
 
 void setup() {
-  // put your setup code here, to run once:
   
-  Can0.begin(500000); //Sett CanBus hastigheten 
+  // Set CAN-bus speed
+  Can0.begin(500000);
 
 
-  // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
+  // Initiate Adafruit display
   display.begin(SSD1306_SWITCHCAPVCC);
-  // Clear the buffer.
+  // Clear display
   display.clearDisplay();
   
   delay(1000);
