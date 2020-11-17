@@ -37,9 +37,9 @@ float az_gf = 0;
 // Initiate CAN TX and RX messages
 static CAN_message_t txmsg, rxmsg;
 // Initiate CAN RX counter
-int count_RX = 0;
+volatile uint32_t count_RX = 0;
 // Initiate CAN TX counter
-int count_TX = 0;
+volatile uint32_t count_TX = 0;
 // Initiate string for storing data recieved from CAN message
 String CANStrRX;
 // Initiate variable used to start transmitting data
@@ -156,7 +156,7 @@ void loop() {
   // Get raw values from IMU
   imu.getMotion6Counts(&ax, &ay, &az, &gx, &gy, &gz);
 
-  // Store value in a variable for maikng CAN-bus datapackag
+  // Store z-acceleration value in a variable for maikng CAN-bus datapackag
   myData = -az;
 
   //Convert raw value from IMU to m/s^2
@@ -171,17 +171,9 @@ void loop() {
       startTX = true;
     }
 
-    // For-loop to store RX data package in string
-    for (int i = 0; i < 8; i++)
-    {
-      CANStrRX += String(rxmsg.buf[i], HEX);
-      CANStrRX += ("") ;
-    }
-
     // Update RX counter
     count_RX++;
   }
-
 
   // Drawing rounded rectangle with lines:
   display.drawRoundRect(0, 0, 128, 64, 5, WHITE);
