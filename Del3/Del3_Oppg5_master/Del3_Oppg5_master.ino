@@ -31,8 +31,6 @@ Adafruit_SSD1306 display(OLED_DC, OLED_RESET, OLED_CS);
 // Initiate IMU sensor and variables to store IMU data
 MPU6050 imu;
 int16_t ax, ay, az, gx, gy, gz;
-// Initiate variable to store converted z-axis IMU data [m/s^2]
-float az_gf = 0;
 
 // Initiate CAN TX and RX messages
 static CAN_message_t txmsg, rxmsg;
@@ -49,7 +47,16 @@ String CANStrRX;
 // Initiate variables used to to make datapackages that will be sent over CAN-bus
 int myData = 0;
 int dataPackage[] = {0, 0, 0, 0, 0, 0};
+// Initiate variables to convert recieved data package to one variable
+int B_0 = 0; 
+int B_1 = 0; 
+int B_2 = 0; 
+int B_3 = 0; 
+int B_4 = 0; 
+int B_5 = 0; 
 
+// Initiate variable to store converted data recieved
+float imuConverted = 0;
 
 
 void setup() {
@@ -159,9 +166,6 @@ void loop() {
   // Store z-acceleration value in a variable for maikng CAN-bus datapackag
   myData = -az;
 
-  //Convert raw value from IMU to m/s^2
-  az_gf = az * ((9.81) / 16384);
-
   // Checking if message is recieved and gathering data of CAN message
   while (Can1.read(rxmsg))
   {
@@ -173,6 +177,24 @@ void loop() {
     {
       CANStrRX += String(rxmsg.buf[i], HEX);
       CANStrRX += ("") ;
+    }
+
+    // Checing if mesage recieved has ID: 0x21h (IMU-data message ID)
+    if(rxmsg.id == 33)
+    { 
+
+    B_0 = rxmsg.buf[0] * pow(256, 5) ;
+    B_1 = rxmsg.buf[1] * pow(256, 4) ;
+    B_2 = rxmsg.buf[2] * pow(256, 3) ;
+    B_3 = rxmsg.buf[3] * pow(256, 2) ;
+    B_4 = rxmsg.buf[4] * pow(256, 1) ;
+    B_5 = rxmsg.buf[5] * pow(256, 0) ;
+
+    imuConverted = ( B_0 + B_1 + B_2 + B_3 + B_4 + B_5 );
+
+    // imu data is transmitted as integer [(m/(s^2))*1000]
+    // dividing by 1000 to get value as [m/(s^2)] for displaying on screen
+    imuConverted = imuConverted/1000;
     }
 
     // Checking if message recieved has ID:0x23h in order to start transmitting
@@ -209,7 +231,7 @@ void loop() {
   display.print(" RX Data:");
   display.println(CANStrRX);
   display.print(" IMU, z: ");
-  display.print(-az_gf);
+  display.print(imuConverted);
   display.println(" m/s^2");
   display.display();
   display.clearDisplay();
