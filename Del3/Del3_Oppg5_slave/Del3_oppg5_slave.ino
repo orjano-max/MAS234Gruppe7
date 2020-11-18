@@ -146,7 +146,7 @@ void loop() {
   while (Can1.read(rxmsg))
   {
 
-    // Checing if mesage recieved is the IMU data, (has CAN ID 0x22h)
+    // Checing if mesage recieved has ID: 0x22h (IMU-data message ID)
     if(rxmsg.id == 34)
     {
 
@@ -165,7 +165,12 @@ void loop() {
 
     Serial.println(myData);
     }
-    
+
+    // Checking if message recieved has ID: 0x24h in order to stop transmitting
+    if (rxmsg.id == 36)
+    {
+      startTX = false;
+    }
     
     // Update RX counter
     count_RX++;   

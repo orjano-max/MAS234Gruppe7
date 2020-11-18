@@ -181,6 +181,12 @@ void loop() {
       startTX = true;
     }
 
+    // Checking if message recieved has ID: 0x24h in order to stop transmitting
+    if (rxmsg.id == 36)
+    {
+      startTX = false;
+    }
+
 
     // Update RX counter
     count_RX++;
