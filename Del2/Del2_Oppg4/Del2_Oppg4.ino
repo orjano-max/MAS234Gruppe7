@@ -112,8 +112,19 @@ void tx_CAN(void)
     //Set id of CAN message
     txmsg.id = 0x22;
 
+    // If acceleration is negative, first slot in datapackage is 1
+    if(myData < 0)
+    {
+      txmsg.buf[0] = 1;
+      myData = -myData;
+    }
+    else
+    {
+      txmsg.buf[0] = 0;
+    }
+
     // Converting rawdata from IMU to an array for sending IMU data over CAN-bus
-    for (int i = 0; i < 6; i++)
+    for (int i = 1; i < 6; i++)
     {
       if (myData / pow(256, 5 - i) >= 1) {
         int x = floor(myData / pow(256, 5 - i));
@@ -126,8 +137,9 @@ void tx_CAN(void)
       }
     }
 
+    
     // Making CAN-bus datapackage containing raw data from IMU z-axis
-    for (int i = 0; i < 6; i++)
+    for (int i = 1; i < 6; i++)
     {
       txmsg.buf[i] = dataPackage[i];
     }
@@ -154,8 +166,8 @@ void loop() {
   // Get raw values from IMU
   imu.getMotion6Counts(&ax, &ay, &az, &gx, &gy, &gz);
 
-  // Store z-acceleration value in a variable for maikng CAN-bus datapackag
-  myData = -az;
+  // Store z-acceleration value in a variable for maikng CAN-bus datapackage
+  myData = az;
 
   //Convert raw value from IMU to m/s^2
   az_gf = az * (9.81 / 16384);

@@ -88,9 +88,18 @@ void tx_CAN(void)
   //Set id of CAN message
   txmsg.id = 0x21;
 
+  if(rxmsg.buf[0] == 1)
+  {
+    txmsg.buf[0] = 1;
+  }
+  else
+  {
+    txmsg.buf[0] = 0;
+  }
+
   Serial.println(myData);
   // Converting rawdata from IMU to an array for sending IMU data over CAN-bus
-  for (int i = 0; i < 6; i++)
+  for (int i = 1; i < 6; i++)
   {
     if (myData / pow(256, 5 - i) >= 1) {
       int x = floor(myData / pow(256, 5 - i));
@@ -104,7 +113,7 @@ void tx_CAN(void)
   }
 
   // Making CAN-bus datapackage containing raw data from IMU z-axis
-  for (int i = 0; i < 6; i++)
+  for (int i = 1; i < 6; i++)
   {
     txmsg.buf[i] = dataPackage[i];
   }
@@ -171,14 +180,13 @@ void loop()
     {
       startTX = true;
 
-      B_0 = rxmsg.buf[0] * pow(256, 5) ;
       B_1 = rxmsg.buf[1] * pow(256, 4) ;
       B_2 = rxmsg.buf[2] * pow(256, 3) ;
       B_3 = rxmsg.buf[3] * pow(256, 2) ;
       B_4 = rxmsg.buf[4] * pow(256, 1) ;
       B_5 = rxmsg.buf[5] * pow(256, 0) ;
 
-      myData = ( B_0 + B_1 + B_2 + B_3 + B_4 + B_5 ) * 9.81 * 1000 / 16384  ;
+      myData = (B_1 + B_2 + B_3 + B_4 + B_5 ) * 9.81 * 1000 / 16384  ;
       Serial.println(myData);
     }
     

@@ -120,8 +120,19 @@ void tx_CAN(void)
     //Set id of CAN message
     txmsg.id = 0x22;
 
+    // If acceleration is negative, first slot in datapackage is 1
+    if(myData < 0)
+    {
+      txmsg.buf[0] = 1;
+      myData = -myData;
+    }
+    else
+    {
+      txmsg.buf[0] = 0;
+    }
+
     // Converting rawdata from IMU to an array for sending IMU data over CAN-bus
-    for (int i = 0; i < 6; i++)
+    for (int i = 1; i < 6; i++)
     {
       if (myData / pow(256, 5 - i) >= 1) {
         int x = floor(myData / pow(256, 5 - i));
@@ -135,7 +146,7 @@ void tx_CAN(void)
     }
 
     // Making CAN-bus datapackage containing raw data from IMU z-axis
-    for (int i = 0; i < 6; i++)
+    for (int i = 1; i < 6; i++)
     {
       txmsg.buf[i] = dataPackage[i];
     }
@@ -163,8 +174,8 @@ void loop() {
   // Get raw values from IMU
   imu.getMotion6Counts(&ax, &ay, &az, &gx, &gy, &gz);
 
-  // Store z-acceleration value in a variable for maikng CAN-bus datapackag
-  myData = -az;
+  // Store z-acceleration value in a variable for making CAN-bus datapackag
+  myData = az;
 
   // Checking if message is recieved and gathering data of CAN message
   while (Can1.read(rxmsg))
@@ -183,18 +194,28 @@ void loop() {
     if(rxmsg.id == 33)
     { 
 
-    B_0 = rxmsg.buf[0] * pow(256, 5) ;
+    B_0 = rxmsg.buf[0];
     B_1 = rxmsg.buf[1] * pow(256, 4) ;
     B_2 = rxmsg.buf[2] * pow(256, 3) ;
     B_3 = rxmsg.buf[3] * pow(256, 2) ;
     B_4 = rxmsg.buf[4] * pow(256, 1) ;
     B_5 = rxmsg.buf[5] * pow(256, 0) ;
 
-    imuConverted = ( B_0 + B_1 + B_2 + B_3 + B_4 + B_5 );
-
+    imuConverted = ( B_1 + B_2 + B_3 + B_4 + B_5 );
+   
     // imu data is transmitted as integer [(m/(s^2))*1000]
     // dividing by 1000 to get value as [m/(s^2)] for displaying on screen
     imuConverted = imuConverted/1000;
+
+    // Value is negative if first slot in data package is 1
+    if(B_0 == 1)
+    {
+      imuConverted = -imuConverted;
+    }
+    else
+    {
+      // Do nothing
+    }
     }
 
     // Checking if message recieved has ID:0x23h in order to start transmitting
