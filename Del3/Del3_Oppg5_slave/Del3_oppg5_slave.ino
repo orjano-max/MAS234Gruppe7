@@ -33,8 +33,6 @@ volatile uint32_t count_TX = 0;
 bool startTX = false;
 // Define interval timer for CAN-bus
 IntervalTimer TX_timer;
-//Initiate TX start variable
-bool startTX = false;
 
 // Initiate variables used to to make datapackages that will be sent over CAN-bus
 int myData = 0;
@@ -123,6 +121,7 @@ void tx_CAN(void)
   // Last two places in data package unused
   txmsg.buf[6] = 0;
   txmsg.buf[7] = 0;
+  
  if(startTX == true)
  {
   // Sending CAN message
