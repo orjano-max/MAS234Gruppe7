@@ -202,7 +202,7 @@ void loop() {
   display.print(" Mottok sist ID: ");
   display.println(rxmsg.id);
   display.print(" IMU, z: ");
-  display.print(-az_gf);
+  display.print(az_gf);
   display.println(" m/s^2");
   display.display();
   display.clearDisplay();
