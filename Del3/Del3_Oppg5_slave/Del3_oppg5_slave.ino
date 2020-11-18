@@ -33,6 +33,8 @@ volatile uint32_t count_TX = 0;
 bool startTX = false;
 // Define interval timer for CAN-bus
 IntervalTimer TX_timer;
+//Initiate TX start variable
+bool startTX = false;
 
 // Initiate variables used to to make datapackages that will be sent over CAN-bus
 int myData = 0;
@@ -121,12 +123,19 @@ void tx_CAN(void)
   // Last two places in data package unused
   txmsg.buf[6] = 0;
   txmsg.buf[7] = 0;
-
+ if(startTX == true)
+ {
   // Sending CAN message
   Serial.println("Sender pew");
   Can1.write(txmsg);
   // Counting amount of messages sent
   count_TX++;
+ }
+ else
+ {
+     // Do nothing
+ }
+  
 
 }
 
@@ -138,10 +147,13 @@ void loop() {
   while (Can1.read(rxmsg))
   {
 
-  
+    // Checing if mesage recieved is the IMU data, (has CAN ID 0x22h)
+    if(rxmsg.id == 34)
+    {
+
+    startTX = true;
     
-    // Update RX counter
-    count_RX++;
+
 
     B_0 = rxmsg.buf[0] * pow(256, 5) ;
     B_1 = rxmsg.buf[1] * pow(256, 4) ;
@@ -153,12 +165,14 @@ void loop() {
     myData = ( B_0 + B_1 + B_2 + B_3 + B_4 + B_5 ) * 9.81 * 1000 / 16384  ; 
 
     Serial.println(myData);
+    }
     
-
     
-
+    // Update RX counter
+    count_RX++;   
     
   }
+
   /*for (int k = 0; k <= 100; k = k + 13)
   {
     display.setTextSize(0);
