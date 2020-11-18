@@ -2,8 +2,6 @@
 // Library for CAN-bus
 #include <FlexCAN.h>
 
-//tissetassen
-
 // Library for Adafruit display functions
 #include <Adafruit_GFX.h>
 // Library for OLED Display(set height to 64 in header file)
@@ -33,17 +31,18 @@ volatile uint32_t count_TX = 0;
 bool startTX = false;
 // Define interval timer for CAN-bus
 IntervalTimer TX_timer;
+String CANStrRX;
+String CANStrTX;
 
 // Initiate variables used to to make datapackages that will be sent over CAN-bus
 int myData = 0;
 int dataPackage[] = {0, 0, 0, 0, 0, 0};
-int B_0 = 0; 
-int B_1 = 0; 
-int B_2 = 0; 
-int B_3 = 0; 
-int B_4 = 0; 
-int B_5 = 0; 
-
+int B_0 = 0;
+int B_1 = 0;
+int B_2 = 0;
+int B_3 = 0;
+int B_4 = 0;
+int B_5 = 0;
 
 void setup() {
 
@@ -74,18 +73,10 @@ void setup() {
     display.print(" Loading: ");
     display.print(i);
     display.println("%");
-
     delay(80);
     display.display();
     display.clearDisplay();
   }
-
-  // Write out info on the display:
-  display.setTextSize(0);
-  display.setCursor(20, 30);
-  display.println("Processing...");
-  display.display();
-  display.clearDisplay();
 }
 
 //Transmit data at rate determined by TX_timer
@@ -96,7 +87,7 @@ void tx_CAN(void)
   txmsg.len = 8;
   //Set id of CAN message
   txmsg.id = 0x21;
-  
+
   Serial.println(myData);
   // Converting rawdata from IMU to an array for sending IMU data over CAN-bus
   for (int i = 0; i < 6; i++)
@@ -111,7 +102,7 @@ void tx_CAN(void)
       //Do nothing
     }
   }
-  
+
   // Making CAN-bus datapackage containing raw data from IMU z-axis
   for (int i = 0; i < 6; i++)
   {
@@ -121,51 +112,76 @@ void tx_CAN(void)
   // Last two places in data package unused
   txmsg.buf[6] = 0;
   txmsg.buf[7] = 0;
-  
- if(startTX == true)
- {
-  // Sending CAN message
-  Serial.println("Sender pew");
-  Can1.write(txmsg);
-  // Counting amount of messages sent
-  count_TX++;
- }
- else
- {
-     // Do nothing
- }
-  
 
+  if (startTX == true)
+  {
+    // Sending CAN message
+    Serial.println("Sending");
+    Can1.write(txmsg);
+    // Counting amount of messages sent
+    count_TX++;
+  }
+  else
+  {
+    // Do nothing
+  }
 }
 
-
 //Main loop:
-void loop() {
+void loop() 
+{
+
+  // Write out info on the display:
+  display.setTextSize(0);
+  display.setCursor(0, 5);
+  display.println(" Processing:");
+  display.println(" ");
+  display.print(" CAN.Rx: ");
+  display.println(CANStrRX);
+  display.println(" ");
+  display.print(" CAN.Tx: ");
+  display.println(CANStrTX);
+  display.display();
+  display.clearDisplay();
 
   // Checking if message is recieved
   while (Can1.read(rxmsg))
   {
+    // Restetting string as nothing in order to store new data in string
+    CANStrRX = "";
 
-    // Checing if mesage recieved has ID: 0x22h (IMU-data message ID)
-    if(rxmsg.id == 34)
+    // For-loop to store RX data package in string, for displaying data
+    for (int i = 0; i < 8; i++)
     {
-
-    startTX = true;
-    
-
-
-    B_0 = rxmsg.buf[0] * pow(256, 5) ;
-    B_1 = rxmsg.buf[1] * pow(256, 4) ;
-    B_2 = rxmsg.buf[2] * pow(256, 3) ;
-    B_3 = rxmsg.buf[3] * pow(256, 2) ;
-    B_4 = rxmsg.buf[4] * pow(256, 1) ;
-    B_5 = rxmsg.buf[5] * pow(256, 0) ;
-
-    myData = ( B_0 + B_1 + B_2 + B_3 + B_4 + B_5 ) * 9.81 * 1000 / 16384  ; 
-
-    Serial.println(myData);
+      CANStrRX += String(rxmsg.buf[i], HEX);
+      CANStrRX += ("") ;
     }
 
+    CANStrTX = "";
+
+    // For-loop to store RX data package in string, for displaying data
+    for (int i = 0; i < 8; i++)
+    {
+      CANStrTX += String(txmsg.buf[i], HEX);
+      CANStrTX += ("") ;
+    }
+
+    // Checing if mesage recieved has ID: 0x22h (IMU-data message ID)
+    if (rxmsg.id == 34)
+    {
+      startTX = true;
+
+      B_0 = rxmsg.buf[0] * pow(256, 5) ;
+      B_1 = rxmsg.buf[1] * pow(256, 4) ;
+      B_2 = rxmsg.buf[2] * pow(256, 3) ;
+      B_3 = rxmsg.buf[3] * pow(256, 2) ;
+      B_4 = rxmsg.buf[4] * pow(256, 1) ;
+      B_5 = rxmsg.buf[5] * pow(256, 0) ;
+
+      myData = ( B_0 + B_1 + B_2 + B_3 + B_4 + B_5 ) * 9.81 * 1000 / 16384  ;
+      Serial.println(myData);
+    }
+    
     // Checking if message recieved has ID: 0x24h in order to stop transmitting
     if (rxmsg.id == 36)
     {
@@ -173,29 +189,6 @@ void loop() {
     }
     
     // Update RX counter
-    count_RX++;   
-    
+    count_RX++;
   }
-
-  /*for (int k = 0; k <= 100; k = k + 13)
-  {
-    display.setTextSize(0);
-    display.setTextColor(WHITE);
-    display.setCursor(20, 50);
-    display.print(" Loading: ");
-    display.print(k);
-    display.println("%");
-    delay(80);
-    display.display();
-    display.clearDisplay();
-  }
-  */
-
-  /*for(i = 0; i < 6; i++)
-    {
-
-    }*/
-
-
-
 }
