@@ -175,8 +175,8 @@ void loop() {
       CANStrRX += ("") ;
     }
 
-    // Checking if message recieved has ID:0x21 in order to start transmitting
-    if (rxmsg.id == 33)
+    // Checking if message recieved has ID:0x23h in order to start transmitting
+    if (rxmsg.id == 35)
     {
       startTX = true;
     }
